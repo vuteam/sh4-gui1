@@ -33,10 +33,16 @@
 #include <fstream>
 #include <sstream>
 
+#if defined(__sh__) // vfd class
+#include <lib/driver/vfd.h>
+#endif
+
 #include "bsod.h"
 #include "version_info.h"
 
+#ifdef ENABLE_GSTREAMER
 #include <gst/gst.h>
+#endif
 
 #ifdef OBJECT_DEBUG
 int object_total_remaining;
@@ -184,7 +190,9 @@ int main(int argc, char **argv)
 	atexit(object_dump);
 #endif
 
+#ifdef ENABLE_GSTREAMER	
 	gst_init(&argc, &argv);
+#endif	
 
 	// set pythonpath if unset
 	setenv("PYTHONPATH", eEnv::resolve("${libdir}/enigma2/python").c_str(), 0);
@@ -279,6 +287,12 @@ int main(int argc, char **argv)
 	gRC::getInstance()->setSpinnerDC(my_dc);
 
 	eRCInput::getInstance()->keyEvent.connect(sigc::ptr_fun(&keyEvent));
+	
+#if defined(__sh__) // initialise the vfd class
+	evfd * vfd = new evfd;
+	vfd->init();
+	delete vfd;
+#endif	
 
 	printf("[MAIN] executing main\n");
 
@@ -343,7 +357,11 @@ const char *getBoxType()
 
 const char *getGStreamerVersionString()
 {
+#ifdef ENABLE_GSTREAMER	
 	return gst_version_string();
+#else
+ 	return "";
+#endif	
 }
 
 #include <malloc.h>
